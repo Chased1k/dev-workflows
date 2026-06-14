@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Node (if this project ever gets tooling)
+node_modules/
+
+# Secrets
+.env
+.env.local
