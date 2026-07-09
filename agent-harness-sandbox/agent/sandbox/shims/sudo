@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+printf '%s\n' "agent-sandbox: sudo is denied inside the disposable agent container" >&2
+exit 126

@@ -1,0 +1,42 @@
+#!/usr/bin/env sh
+set -eu
+
+real_git="/usr/bin/git"
+if [ ! -x "$real_git" ]; then
+  real_git="$(command -v git)"
+fi
+
+subcommand="${1:-}"
+needs_approval=0
+reason=""
+
+case "$subcommand" in
+  push|commit|rebase)
+    needs_approval=1
+    reason="git $subcommand changes repository or remote state"
+    ;;
+  reset)
+    if [ "${2:-}" = "--hard" ]; then
+      needs_approval=1
+      reason="git reset --hard can discard work"
+    fi
+    ;;
+esac
+
+if [ "$needs_approval" -eq 1 ] && [ "${AGENT_ALLOW_GIT_WRITE:-}" != "1" ]; then
+  if [ -t 0 ] && [ -t 1 ]; then
+    printf '%s\n' "agent-sandbox: approval required: $reason" >&2
+    printf '%s' "Type 'approve' to continue: " >&2
+    IFS= read -r answer
+    if [ "$answer" != "approve" ]; then
+      printf '%s\n' "agent-sandbox: denied" >&2
+      exit 126
+    fi
+  else
+    printf '%s\n' "agent-sandbox: denied without TTY: $reason" >&2
+    printf '%s\n' "Set AGENT_ALLOW_GIT_WRITE=1 only after reviewing the session." >&2
+    exit 126
+  fi
+fi
+
+exec "$real_git" "$@"

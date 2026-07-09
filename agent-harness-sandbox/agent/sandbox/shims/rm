@@ -1,0 +1,42 @@
+#!/usr/bin/env sh
+set -eu
+
+real_rm="/bin/rm"
+if [ ! -x "$real_rm" ]; then
+  real_rm="$(command -v rm)"
+fi
+
+recursive=0
+force=0
+for arg in "$@"; do
+  case "$arg" in
+    --recursive|--dir|-r|-R)
+      recursive=1
+      ;;
+    --force|-f)
+      force=1
+      ;;
+    -*r*f*|-*f*r*)
+      recursive=1
+      force=1
+      ;;
+  esac
+done
+
+if [ "$recursive" -eq 1 ] && [ "$force" -eq 1 ]; then
+  for arg in "$@"; do
+    case "$arg" in
+      /|/workspace|/workspace/|"$HOME"|"$HOME"/|.)
+        printf '%s\n' "agent-sandbox: denied dangerous rm target: $arg" >&2
+        exit 126
+        ;;
+    esac
+  done
+  if [ "${AGENT_ALLOW_RM_RF:-}" != "1" ]; then
+    printf '%s\n' "agent-sandbox: denied rm -rf by default" >&2
+    printf '%s\n' "Use a narrower delete or set AGENT_ALLOW_RM_RF=1 for a reviewed one-off." >&2
+    exit 126
+  fi
+fi
+
+exec "$real_rm" "$@"

@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+agent="${1:-}"
+if [[ -z "$agent" ]]; then
+  cat >&2 <<'USAGE'
+Usage: scripts/agent-yolo <claude|codex|agy|opencode|shell> [agent args...]
+
+Runs an AI coding harness in a disposable Docker/Colima container with only the
+current directory mounted at /workspace. Build the image first with:
+  docker build -t agent-harness-sandbox -f agent/sandbox/Dockerfile .
+USAGE
+  exit 2
+fi
+shift || true
+
+image="${AGENT_SANDBOX_IMAGE:-agent-harness-sandbox}"
+workspace="$(pwd)"
+policy="$repo_root/agent/sandbox/policy/agent-guardrails.json"
+shims="$repo_root/agent/sandbox/shims"
+
+container_path="/opt/agent-shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+docker_tty_args=(-i)
+if [[ -t 0 && -t 1 ]]; then
+  docker_tty_args=(-it)
+fi
+
+common=(
+  docker run --rm "${docker_tty_args[@]}"
+  --cap-drop=ALL
+  --security-opt no-new-privileges
+  -e PATH="$container_path"
+  -e AGENT_GUARDRAILS_FILE=/etc/agent-guardrails.json
+  -e ANTHROPIC_API_KEY
+  -e OPENAI_API_KEY
+  -e GEMINI_API_KEY
+  -v "$workspace:/workspace"
+  -v "$policy:/etc/agent-guardrails.json:ro"
+  -v "$shims:/opt/agent-shims:ro"
+  -w /workspace
+  "$image"
+)
+
+case "$agent" in
+  claude)
+    exec "${common[@]}" claude --dangerously-skip-permissions "$@"
+    ;;
+  codex)
+    exec "${common[@]}" codex --dangerously-bypass-approvals-and-sandbox "$@"
+    ;;
+  agy)
+    exec "${common[@]}" sh -c 'command -v agy >/dev/null 2>&1 || {
+      printf "%s\n" "agent-sandbox: agy is not installed in this Docker image." >&2
+      printf "%s\n" "Build a custom Linux image that provides agy, then set AGENT_SANDBOX_IMAGE." >&2
+      exit 127
+    }
+    exec agy --dangerously-skip-permissions "$@"' sh "$@"
+    ;;
+  opencode)
+    # Installed opencode 1.17.10 does not advertise a dangerous skip flag in --help.
+    # Keep it in the same external sandbox and pass any explicit flags through.
+    exec "${common[@]}" opencode "$@"
+    ;;
+  shell)
+    exec "${common[@]}" bash "$@"
+    ;;
+  *)
+    printf '%s\n' "Unknown agent: $agent" >&2
+    exit 2
+    ;;
+esac

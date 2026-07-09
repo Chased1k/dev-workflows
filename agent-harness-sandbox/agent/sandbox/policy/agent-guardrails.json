@@ -1,0 +1,42 @@
+{
+  "$schema": "https://example.local/agent-guardrails.schema.json",
+  "version": 1,
+  "intent": "Shared policy document for local AI coding-agent sandbox wrappers. This file is not natively consumed by every harness; the Docker wrapper and shell shims enforce the portable parts.",
+  "defaultRuntime": {
+    "containerRequiredForDangerMode": true,
+    "mountWorkspaceOnly": true,
+    "mountHostHome": false,
+    "mountHostSsh": false,
+    "mountHostCloudCredentials": false,
+    "runAsRootInDisposableContainer": true,
+    "capDropAll": true,
+    "noNewPrivileges": true
+  },
+  "ask": [
+    "git push",
+    "git commit",
+    "git rebase",
+    "git reset --hard",
+    "package manager install commands",
+    "database migrations against non-local targets",
+    "commands that alter remote infrastructure"
+  ],
+  "deny": [
+    "rm -rf /",
+    "rm -rf /workspace",
+    "sudo",
+    "su",
+    "chmod -R 777",
+    "chown -R",
+    "curl ... | sh",
+    "curl ... | bash",
+    "wget ... | sh",
+    "wget ... | bash",
+    "reads of host ~/.ssh, ~/.aws, ~/.config/gcloud, ~/.kube, and .env files outside the mounted workspace"
+  ],
+  "notes": [
+    "Danger-mode agent flags bypass the agent's own prompts, so this policy is defense-in-depth documentation plus shim input, not a universal native config.",
+    "Do not mount host credential folders into the container. Use limited-scope API keys when a harness needs model access.",
+    "Run git push from the host after reviewing the diff, or temporarily allow it with AGENT_ALLOW_GIT_WRITE=1 inside a trusted session."
+  ]
+}

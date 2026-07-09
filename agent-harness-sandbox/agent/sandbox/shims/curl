@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+set -eu
+
+case " $* " in
+  *'| sh '*|*'| bash '*|*'|sh '*|*'|bash '*)
+    printf '%s\n' "agent-sandbox: denied pipe-to-shell curl pattern" >&2
+    exit 126
+    ;;
+esac
+
+exec /usr/bin/curl "$@"
