@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 agent="${1:-}"
 if [[ -z "$agent" ]]; then
   cat >&2 <<'USAGE'
-Usage: scripts/agent-yolo <claude|codex|agy|opencode|shell> [agent args...]
+Usage: scripts/agent-yolo <claude|codex|agy|opencode|shell> [-extra PATH ...] [agent args...]
 
 Runs an AI coding harness in a disposable Docker/Colima container with only the
 current directory mounted at /workspace. The Docker image is built on first use.
@@ -19,6 +19,30 @@ workspace="$(pwd)"
 policy="$repo_root/agent/sandbox/policy/agent-guardrails.json"
 shims="$repo_root/agent/sandbox/shims"
 dockerfile="$repo_root/agent/sandbox/Dockerfile"
+home_volume="${AGENT_HOME_VOLUME:-agent-harness-home}"
+extra_mounts=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -extra|--extra)
+      if [[ -z "${2:-}" ]]; then
+        printf '%s\n' "agent-sandbox: $1 requires a path" >&2
+        exit 2
+      fi
+      extra_path="$(cd "$2" && pwd)"
+      extra_name="$(basename "$extra_path")"
+      extra_mounts+=(-v "$extra_path:/extra/$extra_name")
+      shift 2
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
 
 if ! command -v docker >/dev/null 2>&1; then
   printf '%s\n' "agent-sandbox: docker is required. Install Docker/Colima and try again." >&2
@@ -63,7 +87,9 @@ common=(
   -e ANTHROPIC_API_KEY
   -e OPENAI_API_KEY
   -e GEMINI_API_KEY
+  -v "$home_volume:/home/node"
   -v "$workspace:/workspace"
+  "${extra_mounts[@]}"
   -v "$policy:/etc/agent-guardrails.json:ro"
   -v "$shims:/opt/agent-shims:ro"
   -w /workspace

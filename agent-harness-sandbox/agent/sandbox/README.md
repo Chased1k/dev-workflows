@@ -37,6 +37,15 @@ codex-safe
 opencode-safe
 ```
 
+To mount one sibling repo without mounting the whole parent directory:
+
+```bash
+cd ~/Documents/Coding/Workdaddy-Front
+claude-safe -extra ~/Documents/Coding/Workdaddy
+```
+
+The current directory is `/workspace`. Extra folders are mounted under `/extra`, for example `/extra/Workdaddy`.
+
 The installed local flags verified on this Mac were:
 
 - Claude Code `2.1.177`: `--dangerously-skip-permissions`
@@ -57,6 +66,8 @@ The wrapper forwards these environment variables if already set on the host:
 - `ANTHROPIC_API_KEY`
 - `OPENAI_API_KEY`
 - `GEMINI_API_KEY`
+
+Claude/Codex/OpenCode config and auth state persist in the Docker volume `agent-harness-home`, mounted at `/home/node`. This avoids repeating onboarding every run without mounting your host `~/.claude`, `~/.codex`, or shell profile.
 
 Use limited-scope keys. Any key available to a dangerous-mode agent can be read by that process. Avoid mounting native login folders such as `~/.claude`, `~/.codex`, or cloud credential directories unless you accept that risk.
 
