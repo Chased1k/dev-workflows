@@ -22,4 +22,5 @@ RUN npm install -g \
 
 WORKDIR /workspace
 ENV SHELL=/bin/bash
+ENV HOME=/home/node
 CMD ["bash"]

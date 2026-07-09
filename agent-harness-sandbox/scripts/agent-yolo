@@ -14,7 +14,7 @@ USAGE
 fi
 shift || true
 
-image="${AGENT_SANDBOX_IMAGE:-agent-harness-sandbox}"
+image="${AGENT_SANDBOX_IMAGE:-agent-harness-sandbox:nonroot}"
 workspace="$(pwd)"
 policy="$repo_root/agent/sandbox/policy/agent-guardrails.json"
 shims="$repo_root/agent/sandbox/shims"
@@ -54,9 +54,11 @@ fi
 
 common=(
   docker run --rm "${docker_tty_args[@]}"
+  --user node
   --cap-drop=ALL
   --security-opt no-new-privileges
   -e PATH="$container_path"
+  -e HOME=/home/node
   -e AGENT_GUARDRAILS_FILE=/etc/agent-guardrails.json
   -e ANTHROPIC_API_KEY
   -e OPENAI_API_KEY
