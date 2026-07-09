@@ -15,22 +15,26 @@ The command shims in `agent/sandbox/shims` add defense-in-depth for common shell
 
 These shims are not a perfect security boundary. The boundary is the container plus the fact that host credentials are not mounted.
 
-## Build
+## Setup
 
 ```bash
-docker build -t agent-harness-sandbox -f agent/sandbox/Dockerfile .
+cd ~/Documents/Coding/dev-workflows
+git pull
+agent-harness-sandbox/scripts/setup-safe-aliases
+source ~/.zshrc
 ```
 
-Colima only needs to be running; Docker will use its context normally.
+Use `source ~/.bashrc` instead if that is your shell. Colima/Docker needs to be running. The image builds automatically the first time you run a safe command.
 
 ## Run
 
 From the project directory you want the agent to edit:
 
 ```bash
-/path/to/dev-workflows/agent-harness-sandbox/scripts/agent-yolo claude
-/path/to/dev-workflows/agent-harness-sandbox/scripts/agent-yolo codex
-/path/to/dev-workflows/agent-harness-sandbox/scripts/agent-yolo opencode
+cd ~/Documents/Coding/some-project
+claude-safe
+codex-safe
+opencode-safe
 ```
 
 The installed local flags verified on this Mac were:

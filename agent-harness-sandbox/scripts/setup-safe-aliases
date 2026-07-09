@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+launcher="$repo_root/scripts/agent-yolo"
+
+if [[ ! -x "$launcher" ]]; then
+  printf '%s\n' "setup-safe-aliases: launcher is not executable: $launcher" >&2
+  exit 1
+fi
+
+shell_name="$(basename "${SHELL:-}")"
+case "$shell_name" in
+  zsh)
+    profile="${ZDOTDIR:-$HOME}/.zshrc"
+    ;;
+  bash)
+    if [[ -f "$HOME/.bashrc" || ! -f "$HOME/.bash_profile" ]]; then
+      profile="$HOME/.bashrc"
+    else
+      profile="$HOME/.bash_profile"
+    fi
+    ;;
+  *)
+    profile="$HOME/.profile"
+    ;;
+esac
+
+mkdir -p "$(dirname "$profile")"
+
+start="# >>> agent-harness-sandbox safe aliases >>>"
+end="# <<< agent-harness-sandbox safe aliases <<<"
+tmp="$(mktemp)"
+
+if [[ -f "$profile" ]]; then
+  awk -v start="$start" -v end="$end" '
+    $0 == start { skip = 1; next }
+    $0 == end { skip = 0; next }
+    skip != 1 { print }
+  ' "$profile" > "$tmp"
+else
+  : > "$tmp"
+fi
+
+cat >> "$tmp" <<ALIASES
+$start
+export AGENT_HARNESS_SANDBOX="$repo_root"
+claude-safe() { "\$AGENT_HARNESS_SANDBOX/scripts/agent-yolo" claude "\$@"; }
+codex-safe() { "\$AGENT_HARNESS_SANDBOX/scripts/agent-yolo" codex "\$@"; }
+opencode-safe() { "\$AGENT_HARNESS_SANDBOX/scripts/agent-yolo" opencode "\$@"; }
+agy-safe() { "\$AGENT_HARNESS_SANDBOX/scripts/agent-yolo" agy "\$@"; }
+agent-safe-shell() { "\$AGENT_HARNESS_SANDBOX/scripts/agent-yolo" shell "\$@"; }
+$end
+ALIASES
+
+mv "$tmp" "$profile"
+
+printf '%s\n' "Installed safe aliases in $profile"
+printf '%s\n' "Reload your shell with: source \"$profile\""

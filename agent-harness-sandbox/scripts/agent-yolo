@@ -8,8 +8,7 @@ if [[ -z "$agent" ]]; then
 Usage: scripts/agent-yolo <claude|codex|agy|opencode|shell> [agent args...]
 
 Runs an AI coding harness in a disposable Docker/Colima container with only the
-current directory mounted at /workspace. Build the image first with:
-  docker build -t agent-harness-sandbox -f agent/sandbox/Dockerfile .
+current directory mounted at /workspace. The Docker image is built on first use.
 USAGE
   exit 2
 fi
@@ -19,6 +18,17 @@ image="${AGENT_SANDBOX_IMAGE:-agent-harness-sandbox}"
 workspace="$(pwd)"
 policy="$repo_root/agent/sandbox/policy/agent-guardrails.json"
 shims="$repo_root/agent/sandbox/shims"
+dockerfile="$repo_root/agent/sandbox/Dockerfile"
+
+if ! command -v docker >/dev/null 2>&1; then
+  printf '%s\n' "agent-sandbox: docker is required. Start Colima/Docker and try again." >&2
+  exit 127
+fi
+
+if ! docker image inspect "$image" >/dev/null 2>&1; then
+  printf '%s\n' "agent-sandbox: building missing Docker image: $image" >&2
+  docker build -t "$image" -f "$dockerfile" "$repo_root"
+fi
 
 container_path="/opt/agent-shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 docker_tty_args=(-i)
