@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+set -eu
+
+mkdir -p "$HOME/.claude" "$HOME/.codex"
+
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+home = Path.home()
+settings_path = home / ".claude" / "settings.json"
+settings = {}
+if settings_path.exists():
+    try:
+        settings = json.loads(settings_path.read_text())
+    except Exception:
+        settings = {}
+
+settings["statusLine"] = {
+    "type": "command",
+    "command": "sh /usr/local/share/agent-harness/bin/statusline-command.sh",
+}
+settings_path.write_text(json.dumps(settings, indent=2) + "\n")
+PY
+
+codex_config="$HOME/.codex/config.toml"
+touch "$codex_config"
+if ! grep -q '^status_line[[:space:]]*=' "$codex_config"; then
+  cat >> "$codex_config" <<'EOF'
+
+# agent-harness-sandbox status line
+status_line = ["model-with-reasoning", "current-dir", "context-used", "used-tokens", "five-hour-limit", "weekly-limit"]
+status_line_use_colors = true
+EOF
+fi
+
+chmod +x /usr/local/share/agent-harness/bin/statusline-command.sh 2>/dev/null || true

@@ -14,7 +14,7 @@ USAGE
 fi
 shift || true
 
-image="${AGENT_SANDBOX_IMAGE:-agent-harness-sandbox:nonroot}"
+image="${AGENT_SANDBOX_IMAGE:-agent-harness-sandbox:statusline-v2}"
 workspace="$(pwd)"
 policy="$repo_root/agent/sandbox/policy/agent-guardrails.json"
 shims="$repo_root/agent/sandbox/shims"
@@ -98,13 +98,13 @@ common=(
 
 case "$agent" in
   claude)
-    exec "${common[@]}" claude --dangerously-skip-permissions "$@"
+    exec "${common[@]}" sh -c '/usr/local/share/agent-harness/bin/bootstrap-agent-home && exec claude --dangerously-skip-permissions "$@"' sh "$@"
     ;;
   codex)
-    exec "${common[@]}" codex --dangerously-bypass-approvals-and-sandbox "$@"
+    exec "${common[@]}" sh -c '/usr/local/share/agent-harness/bin/bootstrap-agent-home && exec codex --dangerously-bypass-approvals-and-sandbox "$@"' sh "$@"
     ;;
   agy)
-    exec "${common[@]}" sh -c 'command -v agy >/dev/null 2>&1 || {
+    exec "${common[@]}" sh -c '/usr/local/share/agent-harness/bin/bootstrap-agent-home && command -v agy >/dev/null 2>&1 || {
       printf "%s\n" "agent-sandbox: agy is not installed in this Docker image." >&2
       printf "%s\n" "Build a custom Linux image that provides agy, then set AGENT_SANDBOX_IMAGE." >&2
       exit 127
@@ -114,10 +114,10 @@ case "$agent" in
   opencode)
     # Installed opencode 1.17.10 does not advertise a dangerous skip flag in --help.
     # Keep it in the same external sandbox and pass any explicit flags through.
-    exec "${common[@]}" opencode "$@"
+    exec "${common[@]}" sh -c '/usr/local/share/agent-harness/bin/bootstrap-agent-home && exec opencode "$@"' sh "$@"
     ;;
   shell)
-    exec "${common[@]}" bash "$@"
+    exec "${common[@]}" sh -c '/usr/local/share/agent-harness/bin/bootstrap-agent-home && exec bash "$@"' sh "$@"
     ;;
   *)
     printf '%s\n' "Unknown agent: $agent" >&2

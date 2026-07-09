@@ -46,6 +46,14 @@ claude-safe -extra ~/Documents/Coding/Workdaddy
 
 The current directory is `/workspace`. Extra folders are mounted under `/extra`, for example `/extra/Workdaddy`.
 
+## Status Lines
+
+Each run bootstraps status-line/config files into the persistent `/home/node` volume:
+
+- Claude gets a command status line based on the host `~/.claude/statusline-command.sh`: current directory, model, context, rate limits, and tokenbank when a tokenbank status reader exists in the container home.
+- Codex gets its built-in status-line items: model, current directory, context, used tokens, five-hour limit, and weekly limit.
+- OpenCode keeps its native UI; no compatible command status-line hook was found in the local OpenCode config. It still uses the same persistent home and extra mounts.
+
 The installed local flags verified on this Mac were:
 
 - Claude Code `2.1.177`: `--dangerously-skip-permissions`

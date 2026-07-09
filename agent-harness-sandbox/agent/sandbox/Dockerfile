@@ -6,6 +6,7 @@ RUN apt-get update \
     ca-certificates \
     curl \
     git \
+    jq \
     openssh-client \
     python3 \
     ripgrep \
@@ -23,4 +24,7 @@ RUN npm install -g \
 WORKDIR /workspace
 ENV SHELL=/bin/bash
 ENV HOME=/home/node
+COPY agent/sandbox/bin/ /usr/local/share/agent-harness/bin/
+RUN chmod +x /usr/local/share/agent-harness/bin/statusline-command.sh \
+    /usr/local/share/agent-harness/bin/bootstrap-agent-home
 CMD ["bash"]
