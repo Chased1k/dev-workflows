@@ -1,4 +1,6 @@
-# Agent Harness Sandbox
+# Agent Harness Sandbox Internals
+
+For normal usage, start with the top-level `README.md`. This file documents the implementation details.
 
 This is a Colima/Docker wrapper for running AI coding harnesses in dangerous or low-friction modes without giving them your whole Mac account.
 
