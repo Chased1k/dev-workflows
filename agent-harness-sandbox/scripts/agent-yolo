@@ -21,8 +21,24 @@ shims="$repo_root/agent/sandbox/shims"
 dockerfile="$repo_root/agent/sandbox/Dockerfile"
 
 if ! command -v docker >/dev/null 2>&1; then
-  printf '%s\n' "agent-sandbox: docker is required. Start Colima/Docker and try again." >&2
+  printf '%s\n' "agent-sandbox: docker is required. Install Docker/Colima and try again." >&2
   exit 127
+fi
+
+if ! docker info >/dev/null 2>&1; then
+  if command -v colima >/dev/null 2>&1; then
+    printf '%s\n' "agent-sandbox: Docker is not running; starting Colima..." >&2
+    colima start
+  else
+    printf '%s\n' "agent-sandbox: Docker is not running, and colima was not found." >&2
+    printf '%s\n' "Start Docker Desktop or install/start Colima, then try again." >&2
+    exit 1
+  fi
+fi
+
+if ! docker info >/dev/null 2>&1; then
+  printf '%s\n' "agent-sandbox: Docker is still unavailable after startup attempt." >&2
+  exit 1
 fi
 
 if ! docker image inspect "$image" >/dev/null 2>&1; then

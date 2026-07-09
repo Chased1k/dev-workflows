@@ -24,7 +24,7 @@ agent-harness-sandbox/scripts/setup-safe-aliases
 source ~/.zshrc
 ```
 
-Use `source ~/.bashrc` instead if that is your shell. Colima/Docker needs to be running. The image builds automatically the first time you run a safe command.
+Use `source ~/.bashrc` instead if that is your shell. The launcher starts Colima when Docker is unavailable, then builds the image automatically the first time you run a safe command.
 
 ## Run
 
