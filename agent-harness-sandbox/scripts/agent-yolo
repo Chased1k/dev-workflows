@@ -14,7 +14,7 @@ USAGE
 fi
 shift || true
 
-image="${AGENT_SANDBOX_IMAGE:-agent-harness-sandbox:statusline-v2}"
+image="${AGENT_SANDBOX_IMAGE:-agent-harness-sandbox:codex-auth-v1}"
 workspace="$(pwd)"
 policy="$repo_root/agent/sandbox/policy/agent-guardrails.json"
 shims="$repo_root/agent/sandbox/shims"
@@ -76,6 +76,12 @@ if [[ -t 0 && -t 1 ]]; then
   docker_tty_args=(-it)
 fi
 
+published_ports=()
+if [[ "$agent" == "codex" ]]; then
+  codex_auth_port="${AGENT_CODEX_AUTH_PORT:-1455}"
+  published_ports+=(-p "127.0.0.1:${codex_auth_port}:1455")
+fi
+
 common=(
   docker run --rm "${docker_tty_args[@]}"
   --user node
@@ -87,6 +93,7 @@ common=(
   -e ANTHROPIC_API_KEY
   -e OPENAI_API_KEY
   -e GEMINI_API_KEY
+  "${published_ports[@]}"
   -v "$home_volume:/home/node"
   -v "$workspace:/workspace"
   "${extra_mounts[@]}"
@@ -101,7 +108,7 @@ case "$agent" in
     exec "${common[@]}" sh -c '/usr/local/share/agent-harness/bin/bootstrap-agent-home && exec claude --dangerously-skip-permissions "$@"' sh "$@"
     ;;
   codex)
-    exec "${common[@]}" sh -c '/usr/local/share/agent-harness/bin/bootstrap-agent-home && exec codex --dangerously-bypass-approvals-and-sandbox "$@"' sh "$@"
+    exec "${common[@]}" sh -c '/usr/local/share/agent-harness/bin/bootstrap-agent-home && { /usr/local/share/agent-harness/bin/forward-localhost-port 1455 >/tmp/codex-auth-forward.log 2>&1 & } && exec codex --dangerously-bypass-approvals-and-sandbox "$@"' sh "$@"
     ;;
   agy)
     exec "${common[@]}" sh -c '/usr/local/share/agent-harness/bin/bootstrap-agent-home && command -v agy >/dev/null 2>&1 || {

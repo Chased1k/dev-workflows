@@ -74,6 +74,14 @@ That volume is mounted at:
 
 You may need to log in once inside each harness. After that, Claude/Codex/OpenCode auth should persist across `*-safe` runs.
 
+`codex-safe` publishes `127.0.0.1:1455` on the Mac and forwards it to Codex's loopback listener inside the container, so browser login callbacks like `http://localhost:1455/auth/callback?...` can reach the Codex process that started login. If port `1455` is already busy on the Mac, run Codex with a different host port:
+
+```bash
+AGENT_CODEX_AUTH_PORT=1456 codex-safe
+```
+
+Then change only the port in the callback URL from `1455` to `1456` before opening or pasting it.
+
 The wrapper intentionally does not mount host auth folders like:
 
 ```bash

@@ -79,6 +79,8 @@ The wrapper forwards these environment variables if already set on the host:
 
 Claude/Codex/OpenCode config and auth state persist in the Docker volume `agent-harness-home`, mounted at `/home/node`. This avoids repeating onboarding every run without mounting your host `~/.claude`, `~/.codex`, or shell profile.
 
+Codex browser login uses a localhost callback. The launcher publishes Mac `127.0.0.1:1455` to the container and starts `/usr/local/share/agent-harness/bin/forward-localhost-port` so callbacks reach Codex even when Codex binds only to container loopback. If the host port is unavailable, set `AGENT_CODEX_AUTH_PORT` to another host port and update the callback URL port to match.
+
 Use limited-scope keys. Any key available to a dangerous-mode agent can be read by that process. Avoid mounting native login folders such as `~/.claude`, `~/.codex`, or cloud credential directories unless you accept that risk.
 
 ## Git Push Workflow

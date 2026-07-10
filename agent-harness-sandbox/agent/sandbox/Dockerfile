@@ -26,5 +26,6 @@ ENV SHELL=/bin/bash
 ENV HOME=/home/node
 COPY agent/sandbox/bin/ /usr/local/share/agent-harness/bin/
 RUN chmod +x /usr/local/share/agent-harness/bin/statusline-command.sh \
-    /usr/local/share/agent-harness/bin/bootstrap-agent-home
+    /usr/local/share/agent-harness/bin/bootstrap-agent-home \
+    /usr/local/share/agent-harness/bin/forward-localhost-port
 CMD ["bash"]

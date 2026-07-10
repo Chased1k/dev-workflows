@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+import os
+import socket
+import sys
+import threading
+
+
+def container_ip():
+    override = os.environ.get("AGENT_FORWARD_LISTEN_HOST")
+    if override:
+        return override
+    try:
+        return socket.gethostbyname(socket.gethostname())
+    except OSError:
+        return "0.0.0.0"
+
+
+def pipe(src, dst):
+    try:
+        while True:
+            data = src.recv(65536)
+            if not data:
+                break
+            dst.sendall(data)
+    except OSError:
+        pass
+    finally:
+        for sock in (src, dst):
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+            try:
+                sock.close()
+            except OSError:
+                pass
+
+
+def handle(client, target_port):
+    try:
+        upstream = socket.create_connection(("127.0.0.1", target_port), timeout=10)
+    except OSError:
+        client.close()
+        return
+    threading.Thread(target=pipe, args=(client, upstream), daemon=True).start()
+    threading.Thread(target=pipe, args=(upstream, client), daemon=True).start()
+
+
+def main():
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 1455
+    listen_host = container_ip()
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind((listen_host, port))
+    server.listen(16)
+    while True:
+        client, _ = server.accept()
+        threading.Thread(target=handle, args=(client, port), daemon=True).start()
+
+
+if __name__ == "__main__":
+    main()
