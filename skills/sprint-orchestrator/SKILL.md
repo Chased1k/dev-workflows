@@ -37,6 +37,32 @@ If any of the `docs/agents/` files are missing, create them as empty files follo
 
 For each sprint, run this exact sequence:
 
+### Step 0: Design Review Gate
+
+Before the Reviewer plans and the Implementer builds, verify the design doc is implementation-ready. Spawn a fresh `goldfish` subagent that reads ONLY the design doc (PRD, implementation plan, and relevant specs) — not the conversation history.
+
+**Round 1:** The goldfish evaluates three checks:
+
+| Check | Question | Pass criteria |
+|---|---|---|
+| **Comprehension** | Can I understand this well enough to explain it back? | Goldfish summarizes the doc in 2-3 sentences accurately |
+| **Critic** | What gaps, ambiguities, or missing edge cases exist? | No blocking gaps identified |
+| **Readiness** | Could I implement this without asking any questions? | No unanswered questions remain |
+
+**Rounds 2+:** Skip comprehension. Only run critic + readiness (the doc was already understood — we're checking if the fixes resolved the gaps).
+
+**Gate logic:**
+
+| Result | Action |
+|---|---|
+| All checks pass | Proceed to Step 1 (Reviewer plans) |
+| Critic or readiness fails | Return gaps to the Elephant. Fix the doc. Re-run the gate (round 2+). |
+| 3 rounds without passing | Escalate to user — the design doc needs human attention before sprints can proceed |
+
+The gate ensures the Implementer receives a doc that's specific enough to build from without guessing. This catches ambiguity before code is written, when it's cheapest to fix.
+
+**Note:** If the doc was already reviewed in a prior sprint and nothing changed, skip the gate. Only run when the doc is new or modified.
+
 ### Step 1: Reviewer plans the sprint
 
 Launch the `reviewer` subagent with this prompt:

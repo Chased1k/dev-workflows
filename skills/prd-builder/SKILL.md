@@ -16,6 +16,15 @@ You are the Architect. Run a structured grill-me session with the user to produc
 
 Follow this sequence:
 
+### Phase 0: Input Check
+
+Before starting the interview, check if `docs/concepts-brief.md` exists in the project.
+
+- **If a concepts brief exists:** Read it. Use the top-ranked cluster as the primary direction and the open questions as a starting point for Phase 1. Skip the Problem & Users category if the brief already covers it — confirm with the user and move directly to Core Functionality.
+- **If no concepts brief exists:** Start from scratch with the full Phase 1 Discovery.
+
+This allows the Brainstormer skill to feed into the PRD Builder seamlessly. The concepts brief is exploration output, not a spec — the architect still needs to validate and deepen it through the grill-me session.
+
 ### Phase 1: Discovery
 Ask these categories of questions. Don't move to the next category until the current one is clear.
 
